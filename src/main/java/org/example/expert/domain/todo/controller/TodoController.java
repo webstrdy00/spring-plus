@@ -2,15 +2,21 @@ package org.example.expert.domain.todo.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.expert.domain.common.annotation.Auth;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
+import org.example.expert.domain.todo.dto.request.TodoSearchCondition;
+import org.example.expert.domain.todo.dto.request.TodoSearchRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
+import org.example.expert.domain.todo.dto.response.TodoSearchResult;
 import org.example.expert.domain.todo.service.TodoService;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +26,7 @@ public class TodoController {
 
     @PostMapping("/todos")
     public ResponseEntity<TodoSaveResponse> saveTodo(
-            @Auth AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody TodoSaveRequest todoSaveRequest
     ) {
         return ResponseEntity.ok(todoService.saveTodo(authUser, todoSaveRequest));
@@ -28,14 +34,40 @@ public class TodoController {
 
     @GetMapping("/todos")
     public ResponseEntity<Page<TodoResponse>> getTodos(
+            @RequestParam(required = false) String weather,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(todoService.getTodos(page, size));
+        TodoSearchRequest searchRequest = new TodoSearchRequest();
+        searchRequest.setWeather(weather);
+        searchRequest.setStartDate(startDate);
+        searchRequest.setEndDate(endDate);
+        return ResponseEntity.ok(todoService.getTodos(searchRequest, page, size));
     }
 
     @GetMapping("/todos/{todoId}")
     public ResponseEntity<TodoResponse> getTodo(@PathVariable long todoId) {
         return ResponseEntity.ok(todoService.getTodo(todoId));
+    }
+
+    @GetMapping("/todos/search")
+    public ResponseEntity<Page<TodoSearchResult>> searchTodos(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String assigneeNickname,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        TodoSearchCondition condition = new TodoSearchCondition();
+        condition.setKeyword(keyword);
+        condition.setStartDate(startDate);
+        condition.setEndDate(endDate);
+        condition.setAssigneeNickname(assigneeNickname);
+
+        Page<TodoSearchResult> results = todoService.searchTodos(condition, page, size);
+        return ResponseEntity.ok(results);
     }
 }

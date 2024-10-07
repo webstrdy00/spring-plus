@@ -1,8 +1,6 @@
 package org.example.expert.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +32,14 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Long userId, String email, UserRole userRole) {
+    public String createToken(Long userId, String email, String nickname, UserRole userRole) {
         Date date = new Date();
 
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(String.valueOf(userId))
                         .claim("email", email)
+                        .claim("nickname", nickname)
                         .claim("userRole", userRole)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
                         .setIssuedAt(date) // 발급일
@@ -50,7 +49,11 @@ public class JwtUtil {
 
     public String substringToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
-            return tokenValue.substring(7);
+            tokenValue = tokenValue.substring(7);
+            while (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
+                tokenValue = tokenValue.substring(7);
+            }
+            return tokenValue;
         }
         throw new ServerException("Not Found Token");
     }
@@ -61,5 +64,26 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    // 토큰 검증
+    public boolean validateToken(String token) {
+        log.info("Validating JWT token");
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            log.info("Token is valid");
+            return true;
+        } catch (SecurityException | MalformedJwtException | SignatureException e) {
+            log.error("Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.", e);
+        } catch (ExpiredJwtException e) {
+            log.error("Expired JWT token, 만료된 JWT token 입니다.", e);
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.", e);
+        } catch (IllegalArgumentException e) {
+            log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.", e);
+        }catch (Exception e) {
+            log.error("Internal server error", e);
+        }
+        return false;
     }
 }

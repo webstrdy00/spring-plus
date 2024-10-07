@@ -1,6 +1,7 @@
 package org.example.expert.domain.manager.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.expert.domain.common.annotation.LogAction;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.manager.dto.request.ManagerSaveRequest;
@@ -30,6 +31,7 @@ public class ManagerService {
     private final TodoRepository todoRepository;
 
     @Transactional
+    @LogAction(action = "MANAGER_REGISTRATION_REQUEST")
     public ManagerSaveResponse saveManager(AuthUser authUser, long todoId, ManagerSaveRequest managerSaveRequest) {
         // 일정을 만든 유저
         User user = User.fromAuthUser(authUser);
@@ -52,7 +54,7 @@ public class ManagerService {
 
         return new ManagerSaveResponse(
                 savedManagerUser.getId(),
-                new UserResponse(managerUser.getId(), managerUser.getEmail())
+                new UserResponse(managerUser.getId(), managerUser.getEmail(), managerUser.getNickname())
         );
     }
 
@@ -67,7 +69,7 @@ public class ManagerService {
             User user = manager.getUser();
             dtoList.add(new ManagerResponse(
                     manager.getId(),
-                    new UserResponse(user.getId(), user.getEmail())
+                    new UserResponse(user.getId(), user.getEmail(), user.getNickname())
             ));
         }
         return dtoList;
