@@ -49,23 +49,14 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # Stop the existing application
-            pkill -f spring-plus.jar || true
+            # Stop the existing service
+            sudo systemctl stop spring-plus.service
             
             # Move the new JAR file
-            mv /home/ubuntu/*.jar /home/ubuntu/spring-plus.jar
+            sudo mv /home/ubuntu/*.jar /opt/spring-plus/spring-plus.jar
             
-            # Start the new application
-            nohup java -jar /home/ubuntu/spring-plus.jar > /home/ubuntu/app.log 2>&1 &
+            # Start the service
+            sudo systemctl start spring-plus.service
             
-            # Wait for the application to start
-            sleep 10
-            
-            # Check if the application is running
-            if pgrep -f spring-plus.jar > /dev/null
-            then
-              echo "Application started successfully"
-            else
-              echo "Failed to start the application"
-              exit 1
-            fi
+            # Check the service status
+            sudo systemctl status spring-plus.service
