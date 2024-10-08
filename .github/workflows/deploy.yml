@@ -52,6 +52,9 @@ jobs:
             # Ensure the directory exists
             sudo mkdir -p /opt/spring-plus
             
+            # Remove old JAR file if it exists
+            sudo rm -f /opt/spring-plus/spring-plus.jar
+            
             # Move the new JAR file
             sudo mv /home/ubuntu/*.jar /opt/spring-plus/spring-plus.jar
             
@@ -60,7 +63,10 @@ jobs:
             sudo chmod 644 /opt/spring-plus/spring-plus.jar
             
             # Restart the service
-            sudo systemctl restart spring-plus.service
+            sudo systemctl restart spring-plus.service || sudo systemctl start spring-plus.service
             
             # Check the service status
             sudo systemctl status spring-plus.service
+            
+            # Show the last few lines of the application log
+            sudo journalctl -u spring-plus.service -n 50 --no-pager
