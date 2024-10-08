@@ -55,8 +55,10 @@ jobs:
             # Remove old JAR file if it exists
             sudo rm -f /opt/spring-plus/spring-plus.jar
             
-            # Move the new JAR file
-            sudo mv /home/ubuntu/*.jar /opt/spring-plus/spring-plus.jar
+            # Find and move the new JAR file
+            jar_file=$(find /home/ubuntu -name "*.jar" -type f -print -quit)
+            if [ -n "$jar_file" ]; then
+            sudo mv "$jar_file" /opt/spring-plus/spring-plus.jar
             
             # Ensure correct permissions
             sudo chown ubuntu:ubuntu /opt/spring-plus/spring-plus.jar
@@ -70,3 +72,10 @@ jobs:
             
             # Show the last few lines of the application log
             sudo journalctl -u spring-plus.service -n 50 --no-pager
+            else
+            echo "No JAR file found in /home/ubuntu directory"
+            exit 1
+            fi
+            
+            # List contents of /opt/spring-plus for verification
+            ls -l /opt/spring-plus
