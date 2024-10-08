@@ -49,14 +49,18 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # Stop the existing service
-            sudo systemctl stop spring-plus.service
+            # Ensure the directory exists
+            sudo mkdir -p /opt/spring-plus
             
             # Move the new JAR file
             sudo mv /home/ubuntu/*.jar /opt/spring-plus/spring-plus.jar
             
-            # Start the service
-            sudo systemctl start spring-plus.service
+            # Ensure correct permissions
+            sudo chown ubuntu:ubuntu /opt/spring-plus/spring-plus.jar
+            sudo chmod 644 /opt/spring-plus/spring-plus.jar
+            
+            # Restart the service
+            sudo systemctl restart spring-plus.service
             
             # Check the service status
             sudo systemctl status spring-plus.service
