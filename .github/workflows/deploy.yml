@@ -36,8 +36,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           source: "./build/libs/*.jar"
-          target: "~"
+          target: "/home/ubuntu"
           strip_components: 2
+          debug: true
 
       - name: SSH Commands
         uses: appleboy/ssh-action@v0.1.6
@@ -48,5 +49,6 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            kill -9 $(ps -ef | grep java | head -n 1 | awk '{print $2}')
-            nohup java -jar *.jar 1> /dev/null 2>&1 &
+            sudo systemctl stop your-service-name
+            sudo mv /home/ubuntu/*.jar /path/to/your/application/
+            sudo systemctl start your-service-name
