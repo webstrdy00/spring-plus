@@ -49,6 +49,11 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            sudo systemctl stop your-service-name
-            sudo mv /home/ubuntu/*.jar /path/to/your/application/
-            sudo systemctl start your-service-name
+            # Stop the existing application
+            pm2 stop spring-plus || true
+            
+            # Move the new JAR file
+            mv /home/ubuntu/*.jar /home/ubuntu/spring-plus.jar
+            
+            # Start the new application
+            pm2 start "java -jar /home/ubuntu/spring-plus.jar" --name spring-plus
