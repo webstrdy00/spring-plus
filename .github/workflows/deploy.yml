@@ -50,10 +50,22 @@ jobs:
           script_stop: true
           script: |
             # Stop the existing application
-            pm2 stop spring-plus || true
+            pkill -f spring-plus.jar || true
             
             # Move the new JAR file
             mv /home/ubuntu/*.jar /home/ubuntu/spring-plus.jar
             
             # Start the new application
-            pm2 start "java -jar /home/ubuntu/spring-plus.jar" --name spring-plus
+            nohup java -jar /home/ubuntu/spring-plus.jar > /home/ubuntu/app.log 2>&1 &
+            
+            # Wait for the application to start
+            sleep 10
+            
+            # Check if the application is running
+            if pgrep -f spring-plus.jar > /dev/null
+            then
+              echo "Application started successfully"
+            else
+              echo "Failed to start the application"
+              exit 1
+            fi
