@@ -25,6 +25,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Create application-aws.yml
+        run: |
+          cd ./src/main/resources
+          echo "${{ secrets.AWS_DATABASE_PROPERTIES }}" > ./application-aws.yml
+          ls -al
+        shell: bash
+
       - name: gradlew bootJar
         run: ./gradlew bootJar
 
@@ -58,7 +65,7 @@ jobs:
             # Find and move the new JAR file
             jar_file=$(find /home/ubuntu -name "*.jar" -type f -print -quit)
             if [ -n "$jar_file" ]; then
-            sudo mv "$jar_file" /opt/spring-plus/spring-plus.jar
+              sudo mv "$jar_file" /opt/spring-plus/spring-plus.jar
             
             # Ensure correct permissions
             sudo chown ubuntu:ubuntu /opt/spring-plus/spring-plus.jar
@@ -73,8 +80,8 @@ jobs:
             # Show the last few lines of the application log
             sudo journalctl -u spring-plus.service -n 50 --no-pager
             else
-            echo "No JAR file found in /home/ubuntu directory"
-            exit 1
+              echo "No JAR file found in /home/ubuntu directory"
+              exit 1
             fi
             
             # List contents of /opt/spring-plus for verification

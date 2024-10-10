@@ -3,4 +3,4 @@ spring:
     name: spring-plus
 
   profiles:
-    active: local
+    active: aws
