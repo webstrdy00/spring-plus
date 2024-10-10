@@ -13,6 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: List files in gradle/wrapper
+        run: ls -la gradle/wrapper
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
@@ -22,6 +25,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Create application-aws.yml
+        run: |
+          cd ./src/main/resources
+          echo "${{ secrets.AWS_DATABASE_PROPERTIES }}" > ./application-aws.yml
+          ls -al
+        shell: bash
+
       - name: gradlew bootJar
         run: ./gradlew bootJar
 
@@ -29,21 +39,50 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ec2-user
+          username: ubuntu
           key: ${{ secrets.SSH_KEY }}
           port: 22
           source: "./build/libs/*.jar"
-          target: "~"
+          target: "/home/ubuntu"
           strip_components: 2
+          debug: true
 
       - name: SSH Commands
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ec2-user
+          username: ubuntu
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script_stop: true
           script: |
-            kill -9 $(ps -ef | grep java | head -n 1 | awk '{print $2}')
-            nohup java -jar *.jar 1> /dev/null 2>&1 &
+            # Ensure the directory exists
+            sudo mkdir -p /opt/spring-plus
+            
+            # Remove old JAR file if it exists
+            sudo rm -f /opt/spring-plus/spring-plus.jar
+            
+            # Find and move the new JAR file
+            jar_file=$(find /home/ubuntu -name "*.jar" -type f -print -quit)
+            if [ -n "$jar_file" ]; then
+              sudo mv "$jar_file" /opt/spring-plus/spring-plus.jar
+            
+            # Ensure correct permissions
+            sudo chown ubuntu:ubuntu /opt/spring-plus/spring-plus.jar
+            sudo chmod 644 /opt/spring-plus/spring-plus.jar
+            
+            # Restart the service
+            sudo systemctl restart spring-plus.service || sudo systemctl start spring-plus.service
+            
+            # Check the service status
+            sudo systemctl status spring-plus.service
+            
+            # Show the last few lines of the application log
+            sudo journalctl -u spring-plus.service -n 50 --no-pager
+            else
+              echo "No JAR file found in /home/ubuntu directory"
+              exit 1
+            fi
+            
+            # List contents of /opt/spring-plus for verification
+            ls -l /opt/spring-plus
