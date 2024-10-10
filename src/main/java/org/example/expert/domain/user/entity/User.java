@@ -25,6 +25,9 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private String nickname;
 
+    @Column
+    private String profileImageUrl;
+
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
@@ -52,5 +55,9 @@ public class User extends Timestamped {
 
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
